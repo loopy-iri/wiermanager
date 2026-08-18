@@ -41,6 +41,9 @@ python3 -m venv /opt/wiremanager/.venv
 /opt/wiremanager/.venv/bin/pip install --no-cache-dir -r /opt/wiremanager/requirements.txt
 install -m 0644 deploy/wiremanager.service /etc/systemd/system/
 install -m 0644 deploy/wiremanager-proxy@.service /etc/systemd/system/
+proxy_bin="$(command -v 3proxy 2>/dev/null || dpkg -L 3proxy 2>/dev/null | awk '/\/3proxy$/ {print; exit}')"
+test -x "$proxy_bin" || { echo "3proxy executable not found"; exit 1; }
+sed -i "s|@3PROXY_BIN@|$proxy_bin|g" /etc/systemd/system/wiremanager-proxy@.service
 systemctl daemon-reload
 systemctl enable wiremanager.service
 systemctl restart wiremanager.service

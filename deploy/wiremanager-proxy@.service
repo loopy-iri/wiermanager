@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/3proxy /etc/wiremanager/proxy/%i.cfg
+ExecStart=@3PROXY_BIN@ /etc/wiremanager/proxy/%i.cfg
 Restart=on-failure
 RestartSec=2
 NoNewPrivileges=true
