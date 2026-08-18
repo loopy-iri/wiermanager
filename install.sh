@@ -15,7 +15,7 @@ while :; do
 done
 apt-get update
 apt-get install -y python3 python3-venv wireguard-tools ca-certificates wget
-if apt-cache show 3proxy >/dev/null 2>&1; then
+if apt-cache policy 3proxy 2>/dev/null | awk '$1 == "Candidate:" && $2 != "(none)" { found=1 } END { exit !found }'; then
   apt-get install -y 3proxy
 else
   arch="$(dpkg --print-architecture)"
