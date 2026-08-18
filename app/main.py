@@ -161,7 +161,7 @@ def get_profile(name: str) -> sqlite3.Row:
 def proxy_config(name: str, port: int, external_ip: str) -> Path:
     PROXY_DIR.mkdir(parents=True, exist_ok=True)
     path = PROXY_DIR / f"{name}.cfg"
-    path.write_text(f"nscache 65536\nauth none\nallow *\nproxy -p{port} -e{external_ip}\n", encoding="ascii")
+    path.write_text(f"nscache 65536\nauth none\nallow *\nsocks -p{port} -e{external_ip}\n", encoding="ascii")
     path.chmod(0o600)
     return path
 

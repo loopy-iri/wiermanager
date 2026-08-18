@@ -44,7 +44,7 @@ The runner only executes fixed commands (`wg-quick`, `wg`, `systemctl`) with arg
 
 ## Service runner design
 
-Each profile is saved as `/etc/wireguard/{name}.conf`; `wg-quick` therefore uses the name itself as the interface (limited to Linux's 15-character limit). It also gets `/etc/wiremanager/proxy/{name}.cfg` plus `wiremanager-proxy@{name}.service`. Upload removes user-supplied hooks and DNS settings, disables `wg-quick`'s default-route changes, then adds a dedicated routing table for the proxy's WireGuard address. This keeps SSH and host traffic on the normal route while 3proxy uses the tunnel. Connect runs `wg-quick up` and starts the proxy; disconnect stops both; restart cycles both. Deleting stops services before removing files and metadata.
+Each profile is saved as `/etc/wireguard/{name}.conf`; `wg-quick` therefore uses the name itself as the interface (limited to Linux's 15-character limit). It also gets `/etc/wiremanager/proxy/{name}.cfg` plus `wiremanager-proxy@{name}.service`. The dedicated proxy is SOCKS5 (no authentication) on the allocated port. Upload removes user-supplied hooks and DNS settings, disables `wg-quick`'s default-route changes, then adds a dedicated routing table for the proxy's WireGuard address. This keeps SSH and host traffic on the normal route while 3proxy uses the tunnel. Connect runs `wg-quick up` and starts the proxy; disconnect stops both; restart cycles both. Deleting stops services before removing files and metadata.
 
 ## Deployment steps
 
@@ -55,4 +55,4 @@ Each profile is saved as `/etc/wireguard/{name}.conf`; `wg-quick` therefore uses
 
 ## UI flow
 
-Open the service URL, upload a `.conf` with a name, then use Connect/Disconnect/Restart/Delete. Each row shows WireGuard state, proxy state and port.
+Open the service URL, upload a `.conf` with a name, then use Connect/Disconnect/Restart/Delete. Each row shows WireGuard state, proxy state and port. Test a profile with `curl --socks5-hostname 127.0.0.1:PORT https://ifconfig.me`.
