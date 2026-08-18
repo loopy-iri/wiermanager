@@ -14,7 +14,7 @@ while :; do
   esac
 done
 apt-get update
-apt-get install -y python3 python3-venv wireguard-tools ca-certificates wget
+apt-get install -y python3 python3-venv wireguard-tools ca-certificates wget build-essential
 if apt-cache policy 3proxy 2>/dev/null | awk '$1 == "Candidate:" && $2 != "(none)" { found=1 } END { exit !found }'; then
   apt-get install -y 3proxy
 else
@@ -50,7 +50,17 @@ if [ ! -f "$proxy_bin" ] || [ ! -x "$proxy_bin" ]; then
     fi
   done)"
 fi
-test -f "$proxy_bin" && test -x "$proxy_bin" || { echo "3proxy executable not found"; exit 1; }
+if [ ! -f "$proxy_bin" ] || [ ! -x "$proxy_bin" ]; then
+  src="$(mktemp -d)"
+  trap 'rm -rf "$src"' EXIT
+  wget -q --show-progress -O "$src/3proxy.tgz" \
+    "https://github.com/3proxy/3proxy/archive/refs/tags/0.9.6.tar.gz"
+  tar -xzf "$src/3proxy.tgz" -C "$src"
+  build_dir="$(find "$src" -mindepth 1 -maxdepth 1 -type d -name '3proxy-*' -print -quit)"
+  (cd "$build_dir" && ln -sf Makefile.Linux Makefile && make)
+  install -m 0755 "$build_dir/bin/3proxy" /usr/local/bin/3proxy
+  proxy_bin=/usr/local/bin/3proxy
+fi
 sed -i "s|@3PROXY_BIN@|$proxy_bin|g" /etc/systemd/system/wiremanager-proxy@.service
 systemctl daemon-reload
 systemctl enable wiremanager.service
