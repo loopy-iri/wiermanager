@@ -32,6 +32,7 @@ else
     "https://github.com/3proxy/3proxy/releases/download/$version/3proxy-$version.$asset_arch.deb"
   dpkg -i "$tmp/3proxy.deb" || apt-get -f install -y
 fi
+systemctl disable --now 3proxy.service 2>/dev/null || true
 install -d -m 0755 /opt/wiremanager /var/lib/wiremanager /etc/wiremanager/proxy
 printf 'WIREMANAGER_PORT=%s\n' "$port" > /etc/wiremanager/wiremanager.env
 chmod 0644 /etc/wiremanager/wiremanager.env
