@@ -42,5 +42,6 @@ python3 -m venv /opt/wiremanager/.venv
 install -m 0644 deploy/wiremanager.service /etc/systemd/system/
 install -m 0644 deploy/wiremanager-proxy@.service /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now wiremanager.service
-echo "WireManager listening on http://127.0.0.1:8080"
+systemctl enable wiremanager.service
+systemctl restart wiremanager.service
+echo "WireManager listening on http://127.0.0.1:$port"
