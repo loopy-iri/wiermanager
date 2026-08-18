@@ -1,0 +1,16 @@
+[Unit]
+Description=WireManager API
+After=network-online.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/opt/wiremanager
+Environment=WIREMANAGER_DB=/var/lib/wiremanager/wiremanager.db
+ExecStart=/opt/wiremanager/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8080
+Restart=on-failure
+NoNewPrivileges=false
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
