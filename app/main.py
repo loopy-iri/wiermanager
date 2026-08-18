@@ -64,10 +64,10 @@ def run(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     log.info("running %s", " ".join(args[:2]))
     try:
         return subprocess.run(list(args), check=check, capture_output=True, text=True, timeout=30)
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
-        detail = getattr(exc, "stderr", "") or "command failed"
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
+        detail = (getattr(exc, "stderr", "") or str(exc) or "command failed").strip().replace("\n", " ")
         log.error("command failed: %s", detail.strip())
-        raise HTTPException(502, "system operation failed") from exc
+        raise HTTPException(502, f"{args[0]} failed: {detail[:300]}") from exc
 
 
 def validate_config(raw: bytes) -> str:
@@ -130,7 +130,7 @@ def get_profile(name: str) -> sqlite3.Row:
 def proxy_config(name: str, port: int) -> Path:
     PROXY_DIR.mkdir(parents=True, exist_ok=True)
     path = PROXY_DIR / f"{name}.cfg"
-    path.write_text(f"daemon\nnscache 65536\nproxy -p{port} -a\n", encoding="ascii")
+    path.write_text(f"nscache 65536\nauth none\nallow *\nproxy -p{port}\n", encoding="ascii")
     path.chmod(0o600)
     return path
 
@@ -174,13 +174,14 @@ async def create_profile(name: str = Form(...), config: UploadFile = File(...)):
 @app.get("/profiles")
 def list_profiles():
     conn = db()
-    return [row_payload(row) for row in conn.execute("SELECT * FROM profiles ORDER BY name")]
+    return [profile_status(row["name"], row["interface_name"], row["proxy_port"]) | row_payload(row) for row in conn.execute("SELECT * FROM profiles ORDER BY name")]
 
 
 def change(name: str, action: str):
     with ops_lock, db() as conn:
         row = get_profile(name)
         if action == "connect":
+            proxy_config(name, row["proxy_port"])
             run("wg-quick", "up", row["config_path"])
             run("systemctl", "enable", "--now", f"{PROXY_SERVICE}{name}.service")
         elif action == "disconnect":
