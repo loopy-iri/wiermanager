@@ -166,6 +166,14 @@ def proxy_config(name: str, port: int, external_ip: str) -> Path:
     return path
 
 
+def refresh_profile_files(row: sqlite3.Row) -> None:
+    path = Path(row["config_path"])
+    text, external_ip = prepare_config(path.read_bytes(), row["proxy_port"])
+    path.write_text(text, encoding="utf-8")
+    path.chmod(0o600)
+    proxy_config(row["name"], row["proxy_port"], external_ip)
+
+
 @app.on_event("startup")
 def startup() -> None:
     db().close()
@@ -212,18 +220,22 @@ def change(name: str, action: str):
     with ops_lock, db() as conn:
         row = get_profile(name)
         if action == "connect":
-            text, external_ip = prepare_config(Path(row["config_path"]).read_bytes(), row["proxy_port"])
-            Path(row["config_path"]).write_text(text, encoding="utf-8")
-            proxy_config(name, row["proxy_port"], external_ip)
-            run("wg-quick", "up", row["config_path"])
+            refresh_profile_files(row)
+            run("systemctl", "stop", f"{PROXY_SERVICE}{name}.service", check=False)
+            if run("wg", "show", row["interface_name"], check=False).returncode != 0:
+                run("wg-quick", "up", row["config_path"])
             run("systemctl", "enable", "--now", f"{PROXY_SERVICE}{name}.service")
         elif action == "disconnect":
             run("systemctl", "disable", "--now", f"{PROXY_SERVICE}{name}.service", check=False)
-            run("wg-quick", "down", row["config_path"], check=False)
+            if run("wg", "show", row["interface_name"], check=False).returncode == 0:
+                run("wg-quick", "down", row["config_path"], check=False)
         else:
-            run("systemctl", "restart", f"{PROXY_SERVICE}{name}.service")
-            run("wg-quick", "down", row["config_path"], check=False)
+            refresh_profile_files(row)
+            run("systemctl", "stop", f"{PROXY_SERVICE}{name}.service", check=False)
+            if run("wg", "show", row["interface_name"], check=False).returncode == 0:
+                run("wg-quick", "down", row["config_path"], check=False)
             run("wg-quick", "up", row["config_path"])
+            run("systemctl", "enable", "--now", f"{PROXY_SERVICE}{name}.service")
         stamp = now()
         conn.execute("UPDATE profiles SET status=?, updated_at=? WHERE name=?", (profile_status(name, row["interface_name"], row["proxy_port"])["status"], stamp, name))
         return profile_status(name, row["interface_name"], row["proxy_port"])
