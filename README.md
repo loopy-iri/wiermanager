@@ -44,7 +44,7 @@ The runner only executes fixed commands (`wg-quick`, `wg`, `systemctl`) with arg
 
 ## Service runner design
 
-Each profile is saved as `/etc/wireguard/{name}.conf`; `wg-quick` therefore uses the name itself as the interface (limited to Linux's 15-character limit). It also gets `/etc/wiremanager/proxy/{name}.cfg` plus `wiremanager-proxy@{name}.service`. Connect runs `wg-quick up` and starts the proxy; disconnect stops both; restart cycles both. Deleting stops services before removing files and metadata.
+Each profile is saved as `/etc/wireguard/{name}.conf`; `wg-quick` therefore uses the name itself as the interface (limited to Linux's 15-character limit). It also gets `/etc/wiremanager/proxy/{name}.cfg` plus `wiremanager-proxy@{name}.service`. Upload removes user-supplied hooks and DNS settings, disables `wg-quick`'s default-route changes, then adds a dedicated routing table for the proxy's WireGuard address. This keeps SSH and host traffic on the normal route while 3proxy uses the tunnel. Connect runs `wg-quick up` and starts the proxy; disconnect stops both; restart cycles both. Deleting stops services before removing files and metadata.
 
 ## Deployment steps
 

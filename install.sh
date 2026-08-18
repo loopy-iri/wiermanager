@@ -14,8 +14,7 @@ while :; do
   esac
 done
 apt-get update
-apt-get install -y python3 python3-venv wireguard-tools systemd-resolved ca-certificates wget
-systemctl enable --now systemd-resolved.service
+apt-get install -y python3 python3-venv wireguard-tools ca-certificates wget
 if apt-cache show 3proxy >/dev/null 2>&1; then
   apt-get install -y 3proxy
 else
