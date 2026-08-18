@@ -6,7 +6,7 @@
 <form id=f><input name=name placeholder="name (max 15 chars)" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,14}" required><input name=config type=file accept=".conf" required><button>Upload</button></form>
 <p id=msg></p><table><thead><tr><th>Name</th><th>WireGuard</th><th>Proxy</th><th>Port</th><th>Actions</th></tr></thead><tbody id=rows></tbody></table>
 <script>
-const api=async(u,o)=>{const r=await fetch(u,o);const j=await r.json();if(!r.ok)throw Error(j.detail||'request failed');return j};
+const api=async(u,o)=>{const r=await fetch(u,o);const j=await r.json();if(!r.ok)throw Error(Array.isArray(j.detail)?j.detail.map(x=>x.msg).join(', '):(j.detail||'request failed'));return j};
 async function load(){const ps=await api('/profiles');rows.innerHTML=ps.map(p=>`<tr><td>${p.name}</td><td class="${p.wireguard==='up'?'up':'down'}">${p.wireguard}</td><td class="${p.proxy==='up'?'up':'down'}">${p.proxy}</td><td>${p.proxy_port}</td><td><button onclick="act('${p.name}','connect')">Connect</button><button onclick="act('${p.name}','disconnect')">Disconnect</button><button onclick="act('${p.name}','restart')">Restart</button><button onclick="delp('${p.name}')">Delete</button></td></tr>`).join('')}
 async function act(n,a){try{await api(`/profiles/${encodeURIComponent(n)}/${a}`,{method:'POST'});load()}catch(e){msg.textContent=e.message}}
 async function delp(n){if(confirm('Delete '+n+'?')){try{await api(`/profiles/${encodeURIComponent(n)}`,{method:'DELETE'});load()}catch(e){msg.textContent=e.message}}}

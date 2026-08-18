@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -148,7 +148,7 @@ def index():
 
 
 @app.post("/profiles", response_model=Profile, status_code=201)
-async def create_profile(name: str, config: UploadFile = File(...)):
+async def create_profile(name: str = Form(...), config: UploadFile = File(...)):
     if not NAME_RE.fullmatch(name):
         raise HTTPException(400, "name must be 1-15 chars: letters, digits, _ or -")
     raw = await config.read()
