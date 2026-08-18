@@ -1,6 +1,18 @@
 #!/bin/sh
 set -eu
 test "$(id -u)" = 0 || { echo "run as root"; exit 1; }
+port="${WIREMANAGER_PORT:-}"
+while :; do
+  if [ -z "$port" ]; then
+    printf "API port [8080]: "
+    read -r port
+    port="${port:-8080}"
+  fi
+  case "$port" in
+    ''|*[!0-9]*) echo "enter a number between 1024 and 65535"; port="" ;;
+    *) [ "$port" -ge 1024 ] && [ "$port" -le 65535 ] && break || { echo "enter a number between 1024 and 65535"; port=""; } ;;
+  esac
+done
 apt-get update
 apt-get install -y python3 python3-venv wireguard-tools ca-certificates wget
 if apt-cache show 3proxy >/dev/null 2>&1; then
@@ -21,6 +33,8 @@ else
   dpkg -i "$tmp/3proxy.deb" || apt-get -f install -y
 fi
 install -d -m 0755 /opt/wiremanager /var/lib/wiremanager /etc/wiremanager/proxy
+printf 'WIREMANAGER_PORT=%s\n' "$port" > /etc/wiremanager/wiremanager.env
+chmod 0644 /etc/wiremanager/wiremanager.env
 cp -a . /opt/wiremanager/
 python3 -m venv /opt/wiremanager/.venv
 /opt/wiremanager/.venv/bin/pip install --no-cache-dir -r /opt/wiremanager/requirements.txt

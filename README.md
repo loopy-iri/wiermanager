@@ -49,7 +49,7 @@ Each profile is saved as `/etc/wireguard/{name}.conf`; `wg-quick` therefore uses
 ## Deployment steps
 
 1. Install Debian/Ubuntu and ensure the host has a valid WireGuard kernel/module and a reachable upstream network.
-2. Run `sudo sh install.sh`; it installs Python, WireGuard tools, 3proxy, the venv, and both systemd units.
+2. Run `sudo sh install.sh`; it asks for the API port (default `8080`) and installs Python, WireGuard tools, 3proxy, the venv, and both systemd units.
 3. Put an authentication/TLS reverse proxy in front of `127.0.0.1:8080` (or use an SSH tunnel). Do not expose the root-owned API directly.
 4. Check `journalctl -u wiremanager.service` and `systemctl status wiremanager-proxy@NAME` for operations.
 
